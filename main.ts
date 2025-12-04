@@ -1,21 +1,6 @@
 // aJ Chat - Enhanced Two User Chat App
 // Server with Deno KV for persistence
 
-// @ts-types deno types
-declare const Deno: {
-  openKv(): Promise<Kv>;
-  readFile(path: string): Promise<Uint8Array>;
-  upgradeWebSocket(req: Request): { socket: WebSocket; response: Response };
-  serve(options: { port: number }, handler: (req: Request) => Promise<Response> | Response): void;
-};
-
-interface Kv {
-  get<T>(key: string[]): Promise<{ value: T | null }>;
-  set(key: string[], value: unknown): Promise<void>;
-  delete(key: string[]): Promise<void>;
-  list<T>(options: { prefix: string[] }): AsyncIterable<{ key: string[]; value: T }>;
-}
-
 // Initialize Deno KV for message persistence
 const kv = await Deno.openKv();
 
