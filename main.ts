@@ -131,7 +131,6 @@ const page = `<!doctype html>
     input.value = '';
   });
 
-  // auto-login if previously chosen
   const saved = localStorage.getItem('aj_user');
   if (saved === 'J' || saved === 'a') {
     setUser(saved);
@@ -140,7 +139,7 @@ const page = `<!doctype html>
 </body>
 </html>`;
 
-const clients = new Map(); // WebSocket -> { user: 'J' | 'a' }
+const clients = new Map();
 
 function broadcast(obj) {
   const msg = JSON.stringify(obj);
@@ -163,7 +162,6 @@ serve((req) => {
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
 
-      // identify user first
       if (data.type === "hello" && (data.user === "J" || data.user === "a")) {
         clients.set(socket, { user: data.user });
         return;
@@ -193,7 +191,6 @@ serve((req) => {
     return response;
   }
 
-  // default: serve the single-page app
   return new Response(page, {
     headers: {
       "content-type": "text/html; charset=utf-8",
