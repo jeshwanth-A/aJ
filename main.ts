@@ -35,7 +35,7 @@ const page = `<!doctype html>
 </head>
 <body>
   <div class="app">
-    <h1>aJ two‑person chat</h1>
+    <h1>aJ two-person chat</h1>
     <div class="card">
       <div id="login">
         <div>Choose who you are for this browser:</div>
@@ -54,7 +54,7 @@ const page = `<!doctype html>
             <span class="pill"><span class="bubble"></span><span id="meLabel"></span></span>
             <span class="pill">Talking with <span id="themLabel"></span></span>
           </span>
-          <span id="connStatus" class="pill">Connecting…</span>
+          <span id="connStatus" class="pill">Connecting...</span>
         </div>
         <div id="messages" class="messages"></div>
         <form id="form">
@@ -82,7 +82,7 @@ const page = `<!doctype html>
 
   function connect() {
     const statusEl = document.getElementById('connStatus');
-    statusEl.textContent = 'Connecting…';
+    statusEl.textContent = 'Connecting...';
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
@@ -92,7 +92,7 @@ const page = `<!doctype html>
     };
 
     ws.onclose = () => {
-      statusEl.textContent = 'Disconnected, retrying…';
+      statusEl.textContent = 'Disconnected, retrying...';
       statusEl.classList.remove('online');
       setTimeout(connect, 1200);
     };
