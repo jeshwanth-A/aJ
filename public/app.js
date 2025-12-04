@@ -261,7 +261,7 @@ const App = {
     if (data.media) {
       if (data.media.type.startsWith('image/')) {
         content = `<div class="msg-media" onclick="App.openImage('${data.media.data}')">
-          <img src="${data.media.data}" alt="Shared image" loading="lazy">
+          <img src="${data.media.data}" alt="Shared image" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22150%22><rect fill=%22%232d2d4a%22 width=%22200%22 height=%22150%22/><text fill=%22%23888%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22>📷 Image</text></svg>';">
         </div>`;
       } else if (data.media.type.startsWith('video/')) {
         content = `<div class="msg-media">
@@ -318,6 +318,12 @@ const App = {
     const container = document.getElementById('messages');
     container.innerHTML = '<div class="date-divider"><span>Today</span></div>';
     this.messages = [];
+
+    // Clear gallery before rebuilding from history
+    const galleryGrid = document.getElementById('galleryGrid');
+    if (galleryGrid) {
+      galleryGrid.innerHTML = '<p class="gallery-empty">Photos shared in chat will appear here 💕</p>';
+    }
 
     if (messages && messages.length) {
       messages.forEach(msg => this.addMessage(msg));
