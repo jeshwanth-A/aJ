@@ -1325,3 +1325,283 @@ html, body {
     max-width: 100%;
   }
 }
+
+/* ========== Calendar Styles ========== */
+.calendar-modal {
+  max-width: 500px;
+}
+
+.calendar-body {
+  padding: 1.5rem;
+}
+
+.calendar-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.calendar-add input[type="text"] {
+  flex: 2;
+  min-width: 150px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.calendar-add input[type="date"] {
+  flex: 1;
+  min-width: 130px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.btn-add {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-add:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+}
+
+.calendar-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.calendar-event {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.event-date {
+  font-size: 0.85rem;
+  color: var(--accent-1);
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.event-title {
+  flex: 1;
+  font-size: 1rem;
+}
+
+.btn-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-size: 0.95rem;
+}
+
+/* ========== Wishlist Styles ========== */
+.wishlist-modal {
+  max-width: 500px;
+}
+
+.wishlist-body {
+  padding: 1.5rem;
+}
+
+.wishlist-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.wishlist-add input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.wishlist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.wishlist-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.wishlist-item.completed {
+  opacity: 0.6;
+}
+
+.wishlist-item.completed .wish-title {
+  text-decoration: line-through;
+}
+
+.wishlist-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-1);
+  cursor: pointer;
+}
+
+.wish-content {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wish-title {
+  font-size: 1rem;
+}
+
+.wish-link {
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.wish-by {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ========== Countdown Styles ========== */
+.countdown-modal {
+  max-width: 500px;
+}
+
+.countdown-body {
+  padding: 1.5rem;
+}
+
+.countdown-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.countdown-add input[type="text"] {
+  flex: 2;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.countdown-add input[type="date"] {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.countdown-add select {
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.countdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.countdown-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.countdown-emoji {
+  font-size: 2rem;
+}
+
+.countdown-info {
+  flex: 1;
+}
+
+.countdown-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.countdown-time {
+  font-size: 1.1rem;
+  color: var(--accent-1);
+  font-weight: 700;
+}

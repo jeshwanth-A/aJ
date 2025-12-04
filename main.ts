@@ -38,6 +38,44 @@ interface Message {
   mood?: string;
   online?: boolean;
   messages?: Message[];
+  // Extended properties for new features
+  event?: CalendarEvent;
+  eventId?: string;
+  item?: WishlistItem;
+  itemId?: string;
+  countdown?: CountdownItem;
+  countdownId?: string;
+}
+
+// Calendar Event interface
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  description?: string;
+  createdBy: string;
+  createdAt: number;
+}
+
+// Wishlist Item interface
+interface WishlistItem {
+  id: string;
+  title: string;
+  description?: string;
+  link?: string;
+  addedBy: string;
+  completed: boolean;
+  createdAt: number;
+}
+
+// Countdown Item interface
+interface CountdownItem {
+  id: string;
+  title: string;
+  targetDate: string;
+  emoji?: string;
+  createdBy: string;
+  createdAt: number;
 }
 
 export {};
@@ -115,6 +153,81 @@ async function getNotes(): Promise<string> {
 // Save shared notes
 async function saveNotes(content: string) {
   await kv.set(["notes"], content);
+}
+
+// Add reaction to a message
+async function addReactionToMessage(messageId: string, user: string, emoji: string) {
+  const iter = kv.list<Message>({ prefix: ["messages"] });
+  for await (const entry of iter) {
+    if (entry.value.id === messageId) {
+      const msg = entry.value;
+      if (!msg.reactions) {
+        msg.reactions = {};
+      }
+      if (!msg.reactions[emoji]) {
+        msg.reactions[emoji] = [];
+      }
+      if (!msg.reactions[emoji].includes(user)) {
+        msg.reactions[emoji].push(user);
+      }
+      await kv.set(entry.key, msg);
+      break;
+    }
+  }
+}
+
+// Calendar Event functions
+async function getCalendarEvents(): Promise<CalendarEvent[]> {
+  const events: CalendarEvent[] = [];
+  const iter = kv.list<CalendarEvent>({ prefix: ["calendar"] });
+  for await (const entry of iter) {
+    events.push(entry.value);
+  }
+  return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}
+
+async function saveCalendarEvent(event: CalendarEvent) {
+  await kv.set(["calendar", event.id], event);
+}
+
+async function deleteCalendarEvent(eventId: string) {
+  await kv.delete(["calendar", eventId]);
+}
+
+// Wishlist functions
+async function getWishlist(): Promise<WishlistItem[]> {
+  const items: WishlistItem[] = [];
+  const iter = kv.list<WishlistItem>({ prefix: ["wishlist"] });
+  for await (const entry of iter) {
+    items.push(entry.value);
+  }
+  return items.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+async function saveWishlistItem(item: WishlistItem) {
+  await kv.set(["wishlist", item.id], item);
+}
+
+async function deleteWishlistItem(itemId: string) {
+  await kv.delete(["wishlist", itemId]);
+}
+
+// Countdown functions
+async function getCountdowns(): Promise<CountdownItem[]> {
+  const countdowns: CountdownItem[] = [];
+  const iter = kv.list<CountdownItem>({ prefix: ["countdowns"] });
+  for await (const entry of iter) {
+    countdowns.push(entry.value);
+  }
+  return countdowns.sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime());
+}
+
+async function saveCountdown(countdown: CountdownItem) {
+  await kv.set(["countdowns", countdown.id], countdown);
+}
+
+async function deleteCountdown(countdownId: string) {
+  await kv.delete(["countdowns", countdownId]);
 }
 
 // Get content type for file extension
@@ -228,12 +341,71 @@ async function handleWebSocketMessage(
 
     case "reaction":
       if (!info?.user || !data.id) return;
+      // Save reaction to message in KV
+      await addReactionToMessage(data.id, info.user, data.emoji as string);
       broadcast({
         type: "reaction",
         id: data.id,
         user: info.user,
         emoji: data.emoji,
       } as unknown as Message);
+      break;
+
+    case "getCalendar":
+      const events = await getCalendarEvents();
+      socket.send(JSON.stringify({ type: "calendar", events }));
+      break;
+
+    case "saveCalendarEvent":
+      if (data.event) {
+        await saveCalendarEvent(data.event as CalendarEvent);
+        broadcast({ type: "calendar", events: await getCalendarEvents() } as unknown as Message);
+      }
+      break;
+
+    case "deleteCalendarEvent":
+      if (data.eventId) {
+        await deleteCalendarEvent(data.eventId as string);
+        broadcast({ type: "calendar", events: await getCalendarEvents() } as unknown as Message);
+      }
+      break;
+
+    case "getWishlist":
+      const wishlist = await getWishlist();
+      socket.send(JSON.stringify({ type: "wishlist", items: wishlist }));
+      break;
+
+    case "saveWishlistItem":
+      if (data.item) {
+        await saveWishlistItem(data.item as WishlistItem);
+        broadcast({ type: "wishlist", items: await getWishlist() } as unknown as Message);
+      }
+      break;
+
+    case "deleteWishlistItem":
+      if (data.itemId) {
+        await deleteWishlistItem(data.itemId as string);
+        broadcast({ type: "wishlist", items: await getWishlist() } as unknown as Message);
+      }
+      break;
+
+    case "getCountdowns":
+      const countdowns = await getCountdowns();
+      socket.send(JSON.stringify({ type: "countdowns", countdowns }));
+      break;
+
+    case "saveCountdown":
+      if (data.countdown) {
+        await saveCountdown(data.countdown as CountdownItem);
+        broadcast({ type: "countdowns", countdowns: await getCountdowns() } as unknown as Message);
+      }
+      break;
+
+    case "deleteCountdown":
+      if (data.countdownId) {
+        await deleteCountdown(data.countdownId as string);
+        broadcast({ type: "countdowns", countdowns: await getCountdowns() } as unknown as Message);
+      }
       break;
 
     case "delete":

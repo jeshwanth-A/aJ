@@ -234,6 +234,15 @@ const App = {
       case 'notes':
         this.updateSharedNotes(data.content);
         break;
+      case 'calendar':
+        this.renderCalendarEvents(data.events);
+        break;
+      case 'wishlist':
+        this.renderWishlistItems(data.items);
+        break;
+      case 'countdowns':
+        this.renderCountdowns(data.countdowns);
+        break;
     }
   },
 
@@ -624,7 +633,7 @@ const App = {
         osc.frequency.value = freq;
         osc.type = 'sine';
         gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.1);
-        gain.gain.exponentialDecayTo && gain.gain.exponentialDecayTo(0.01, ctx.currentTime + i * 0.1 + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
         osc.start(ctx.currentTime + i * 0.1);
         osc.stop(ctx.currentTime + i * 0.1 + 0.3);
       });
@@ -837,22 +846,362 @@ const App = {
     document.getElementById('galleryModal').classList.add('hidden');
   },
 
-  // Placeholder features
+  // ========== CALENDAR ==========
+  calendarEvents: [],
+
   openCalendar() {
-    this.showToast('📅 Calendar coming soon!');
+    this.showCalendarModal();
     this.toggleFeatures();
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'getCalendar' }));
+    }
   },
+
+  showCalendarModal() {
+    let modal = document.getElementById('calendarModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'calendarModal';
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-backdrop" onclick="App.closeCalendar()"></div>
+        <div class="modal-content calendar-modal">
+          <div class="modal-header">
+            <h2>📅 Our Calendar</h2>
+            <button class="btn-close" onclick="App.closeCalendar()">×</button>
+          </div>
+          <div class="calendar-body">
+            <div class="calendar-add">
+              <input type="text" id="calendarTitle" placeholder="Event title..." />
+              <input type="date" id="calendarDate" />
+              <button class="btn-add" onclick="App.addCalendarEvent()">Add</button>
+            </div>
+            <div class="calendar-events" id="calendarEvents">
+              <p class="empty-state">No events yet 💕</p>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('app').appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+  },
+
+  closeCalendar() {
+    const modal = document.getElementById('calendarModal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  addCalendarEvent() {
+    const title = document.getElementById('calendarTitle').value.trim();
+    const date = document.getElementById('calendarDate').value;
+    if (!title || !date) {
+      this.showToast('Please fill in title and date');
+      return;
+    }
+
+    const event = {
+      id: `evt-${Date.now()}`,
+      title,
+      date,
+      createdBy: this.me,
+      createdAt: Date.now()
+    };
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'saveCalendarEvent', event }));
+    }
+
+    document.getElementById('calendarTitle').value = '';
+    document.getElementById('calendarDate').value = '';
+  },
+
+  deleteCalendarEvent(eventId) {
+    if (!confirm('Delete this event?')) return;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'deleteCalendarEvent', eventId }));
+    }
+  },
+
+  renderCalendarEvents(events) {
+    this.calendarEvents = events || [];
+    const container = document.getElementById('calendarEvents');
+    if (!container) return;
+
+    if (!events || events.length === 0) {
+      container.innerHTML = '<p class="empty-state">No events yet 💕</p>';
+      return;
+    }
+
+    container.innerHTML = events.map(e => {
+      const dateObj = new Date(e.date);
+      const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return `
+        <div class="calendar-event">
+          <div class="event-date">${formatted}</div>
+          <div class="event-title">${this.escapeHtml(e.title)}</div>
+          <button class="btn-delete" onclick="App.deleteCalendarEvent('${e.id}')">×</button>
+        </div>
+      `;
+    }).join('');
+  },
+
+  // ========== WISHLIST ==========
+  wishlistItems: [],
 
   openWishlist() {
-    this.showToast('🎁 Wishlist coming soon!');
+    this.showWishlistModal();
     this.toggleFeatures();
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'getWishlist' }));
+    }
   },
 
+  showWishlistModal() {
+    let modal = document.getElementById('wishlistModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'wishlistModal';
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-backdrop" onclick="App.closeWishlist()"></div>
+        <div class="modal-content wishlist-modal">
+          <div class="modal-header">
+            <h2>🎁 Our Wishlist</h2>
+            <button class="btn-close" onclick="App.closeWishlist()">×</button>
+          </div>
+          <div class="wishlist-body">
+            <div class="wishlist-add">
+              <input type="text" id="wishlistTitle" placeholder="What do you wish for?..." />
+              <input type="text" id="wishlistLink" placeholder="Link (optional)" />
+              <button class="btn-add" onclick="App.addWishlistItem()">Add</button>
+            </div>
+            <div class="wishlist-items" id="wishlistItems">
+              <p class="empty-state">No wishes yet 💭</p>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('app').appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+  },
+
+  closeWishlist() {
+    const modal = document.getElementById('wishlistModal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  addWishlistItem() {
+    const title = document.getElementById('wishlistTitle').value.trim();
+    const link = document.getElementById('wishlistLink').value.trim();
+    if (!title) {
+      this.showToast('Please enter a wish');
+      return;
+    }
+
+    const item = {
+      id: `wish-${Date.now()}`,
+      title,
+      link: link || undefined,
+      addedBy: this.me,
+      completed: false,
+      createdAt: Date.now()
+    };
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'saveWishlistItem', item }));
+    }
+
+    document.getElementById('wishlistTitle').value = '';
+    document.getElementById('wishlistLink').value = '';
+  },
+
+  toggleWishlistItem(itemId) {
+    const item = this.wishlistItems.find(i => i.id === itemId);
+    if (!item) return;
+    item.completed = !item.completed;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'saveWishlistItem', item }));
+    }
+  },
+
+  deleteWishlistItem(itemId) {
+    if (!confirm('Delete this wish?')) return;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'deleteWishlistItem', itemId }));
+    }
+  },
+
+  renderWishlistItems(items) {
+    this.wishlistItems = items || [];
+    const container = document.getElementById('wishlistItems');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+      container.innerHTML = '<p class="empty-state">No wishes yet 💭</p>';
+      return;
+    }
+
+    container.innerHTML = items.map(item => `
+      <div class="wishlist-item ${item.completed ? 'completed' : ''}">
+        <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="App.toggleWishlistItem('${item.id}')" />
+        <div class="wish-content">
+          <span class="wish-title">${this.escapeHtml(item.title)}</span>
+          ${item.link ? `<a href="${item.link}" target="_blank" class="wish-link">🔗</a>` : ''}
+          <span class="wish-by">by ${item.addedBy}</span>
+        </div>
+        <button class="btn-delete" onclick="App.deleteWishlistItem('${item.id}')">×</button>
+      </div>
+    `).join('');
+  },
+
+  // ========== COUNTDOWN ==========
+  countdowns: [],
+  countdownInterval: null,
+
   openCountdown() {
-    this.showToast('⏰ Countdown coming soon!');
+    this.showCountdownModal();
     this.toggleFeatures();
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'getCountdowns' }));
+    }
+  },
+
+  showCountdownModal() {
+    let modal = document.getElementById('countdownModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'countdownModal';
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-backdrop" onclick="App.closeCountdown()"></div>
+        <div class="modal-content countdown-modal">
+          <div class="modal-header">
+            <h2>⏰ Our Countdowns</h2>
+            <button class="btn-close" onclick="App.closeCountdown()">×</button>
+          </div>
+          <div class="countdown-body">
+            <div class="countdown-add">
+              <input type="text" id="countdownTitle" placeholder="What are you counting to?..." />
+              <input type="date" id="countdownDate" />
+              <select id="countdownEmoji">
+                <option value="🎉">🎉</option>
+                <option value="💕">💕</option>
+                <option value="🎂">🎂</option>
+                <option value="✈️">✈️</option>
+                <option value="🎁">🎁</option>
+                <option value="🏖️">🏖️</option>
+                <option value="🎄">🎄</option>
+              </select>
+              <button class="btn-add" onclick="App.addCountdown()">Add</button>
+            </div>
+            <div class="countdown-list" id="countdownList">
+              <p class="empty-state">No countdowns yet ⏳</p>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('app').appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+    this.startCountdownTimer();
+  },
+
+  closeCountdown() {
+    const modal = document.getElementById('countdownModal');
+    if (modal) modal.classList.add('hidden');
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+  },
+
+  addCountdown() {
+    const title = document.getElementById('countdownTitle').value.trim();
+    const targetDate = document.getElementById('countdownDate').value;
+    const emoji = document.getElementById('countdownEmoji').value;
+
+    if (!title || !targetDate) {
+      this.showToast('Please fill in title and date');
+      return;
+    }
+
+    const countdown = {
+      id: `cd-${Date.now()}`,
+      title,
+      targetDate,
+      emoji,
+      createdBy: this.me,
+      createdAt: Date.now()
+    };
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'saveCountdown', countdown }));
+    }
+
+    document.getElementById('countdownTitle').value = '';
+    document.getElementById('countdownDate').value = '';
+  },
+
+  deleteCountdown(countdownId) {
+    if (!confirm('Delete this countdown?')) return;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'deleteCountdown', countdownId }));
+    }
+  },
+
+  startCountdownTimer() {
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
+    this.countdownInterval = setInterval(() => this.updateCountdownDisplay(), 1000);
+    this.updateCountdownDisplay();
+  },
+
+  updateCountdownDisplay() {
+    const container = document.getElementById('countdownList');
+    if (!container || !this.countdowns.length) return;
+
+    container.innerHTML = this.countdowns.map(cd => {
+      const target = new Date(cd.targetDate).getTime();
+      const now = Date.now();
+      const diff = target - now;
+
+      let timeStr;
+      if (diff <= 0) {
+        timeStr = "🎉 It's here!";
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        timeStr = `${days}d ${hours}h ${mins}m`;
+      }
+
+      return `
+        <div class="countdown-card">
+          <div class="countdown-emoji">${cd.emoji || '⏰'}</div>
+          <div class="countdown-info">
+            <div class="countdown-title">${this.escapeHtml(cd.title)}</div>
+            <div class="countdown-time">${timeStr}</div>
+          </div>
+          <button class="btn-delete" onclick="App.deleteCountdown('${cd.id}')">×</button>
+        </div>
+      `;
+    }).join('');
+  },
+
+  renderCountdowns(countdowns) {
+    this.countdowns = countdowns || [];
+    const container = document.getElementById('countdownList');
+    if (!container) return;
+
+    if (!countdowns || countdowns.length === 0) {
+      container.innerHTML = '<p class="empty-state">No countdowns yet ⏳</p>';
+      return;
+    }
+    this.updateCountdownDisplay();
   }
 };
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => App.init());
+
