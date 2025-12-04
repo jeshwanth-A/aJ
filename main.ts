@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-
 const page = `<!doctype html>
 <html>
 <head>
@@ -141,14 +139,14 @@ const page = `<!doctype html>
 
 const clients = new Map();
 
-function broadcast(obj) {
+function broadcast(obj: { type: string; user: string; text: string; time: number }) {
   const msg = JSON.stringify(obj);
   for (const [ws] of clients) {
     try { ws.send(msg); } catch (_) { /* ignore */ }
   }
 }
 
-serve((req) => {
+Deno.serve({ port: 8000 }, (req) => {
   const { pathname } = new URL(req.url);
 
   if (pathname === "/ws") {
