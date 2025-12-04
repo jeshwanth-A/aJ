@@ -260,9 +260,14 @@ const App = {
     // Handle media
     if (data.media) {
       if (data.media.type.startsWith('image/')) {
-        content = `<div class="msg-media" onclick="App.openImage('${data.media.data}')">
-          <img src="${data.media.data}" alt="Shared image" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22150%22><rect fill=%22%232d2d4a%22 width=%22200%22 height=%22150%22/><text fill=%22%23888%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22>📷 Image</text></svg>';">
-        </div>`;
+        // Validate image data
+        if (data.media.data && data.media.data.length > 50) {
+          content = `<div class="msg-media" onclick="App.openImage('${data.media.data}')">
+            <img src="${data.media.data}" alt="Shared image" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'msg-error\\'>⚠️ Image failed to load</div>'">
+          </div>`;
+        } else {
+          content = `<div class="msg-error">⚠️ Invalid image data</div>`;
+        }
       } else if (data.media.type.startsWith('video/')) {
         content = `<div class="msg-media">
           <video src="${data.media.data}" controls></video>
