@@ -112,7 +112,7 @@ const page = `<!doctype html>
     wrap.className = 'msg ' + kind;
     const meta = document.createElement('div');
     meta.className = 'meta';
-    meta.textContent = `${from} · ${new Date(time).toLocaleTimeString()}`;
+        meta.textContent = `${from} · ${new Date(time).toLocaleTimeString()}`;
     const body = document.createElement('div');
     body.textContent = text;
     wrap.appendChild(meta);
