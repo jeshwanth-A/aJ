@@ -1,155 +1,297 @@
-// aJ Chat - Two user chat app
-const page = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>aJ chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 1rem; background:#050816; color:#e5e7eb; }
-    .app { max-width: 640px; margin: 0 auto; }
-    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-    button { cursor: pointer; }
-    .card { background:#0f172a; border-radius: 0.75rem; padding: 1rem; box-shadow: 0 10px 40px rgba(15,23,42,0.7); }
-    .login-btns { display:flex; gap:0.75rem; margin-top:0.5rem; }
-    .login-btns button { flex:1; padding:0.75rem 1rem; border-radius:999px; border:none; background:#22c55e; color:#020617; font-weight:600; }
-    .login-btns button.secondary { background:#38bdf8; }
-    .login-info { margin-top:0.75rem; font-size:0.85rem; color:#9ca3af; }
-    .chat { display:flex; flex-direction:column; gap:0.75rem; margin-top:1rem; }
-    .messages { height:360px; overflow-y:auto; padding:0.75rem; border-radius:0.75rem; background:#020617; border:1px solid #1f2937; scroll-behavior:smooth; }
-    .msg { margin-bottom:0.35rem; max-width:80%; padding:0.4rem 0.65rem; border-radius:0.6rem; font-size:0.9rem; word-wrap:break-word; }
-    .msg.me { margin-left:auto; background:#22c55e; color:#022c22; border-bottom-right-radius:0.1rem; }
-    .msg.them { margin-right:auto; background:#111827; color:#e5e7eb; border-bottom-left-radius:0.1rem; border:1px solid #1f2937; }
-    .meta { font-size:0.7rem; opacity:0.7; margin-bottom:0.1rem; }
-    form { display:flex; gap:0.5rem; margin-top:0.75rem; }
-    input[type=text] { flex:1; padding:0.6rem 0.8rem; border-radius:999px; border:1px solid #374151; background:#020617; color:#e5e7eb; }
-    input[type=text]:focus { outline:none; border-color:#22c55e; box-shadow:0 0 0 1px rgba(34,197,94,0.4); }
-    .send-btn { padding:0.6rem 1.2rem; border-radius:999px; border:none; background:#22c55e; color:#022c22; font-weight:600; display:flex; align-items:center; gap:0.25rem; }
-    .status { margin-top:0.5rem; font-size:0.8rem; color:#9ca3af; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap; }
-    .pill { padding:0.1rem 0.6rem; border-radius:999px; font-size:0.75rem; background:#111827; color:#e5e7eb; border:1px solid #1f2937; }
-    .online { color:#4ade80; }
-    .bubble { width:8px; height:8px; border-radius:999px; background:#22c55e; display:inline-block; margin-right:0.2rem; }
-    a { color:#38bdf8; }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <h1>aJ two-person chat</h1>
-    <div class="card">
-      <div id="login">
-        <div>Choose who you are for this browser:</div>
-        <div class="login-btns">
-          <button onclick="setUser('J')">Login as J</button>
-          <button class="secondary" onclick="setUser('a')">Login as a</button>
-        </div>
-        <div class="login-info">
-          No passwords, no signup. Only users <strong>J</strong> and <strong>a</strong> are allowed. Open this page in two browsers/devices, pick different users, and start chatting.
-        </div>
-      </div>
+// aJ Chat - Enhanced Two User Chat App
+// Server with Deno KV for persistence
 
-      <div id="chat" style="display:none;" class="chat">
-        <div class="status">
-          <span>
-            <span class="pill"><span class="bubble"></span><span id="meLabel"></span></span>
-            <span class="pill">Talking with <span id="themLabel"></span></span>
-          </span>
-          <span id="connStatus" class="pill">Connecting...</span>
-        </div>
-        <div id="messages" class="messages"></div>
-        <form id="form">
-          <input id="input" type="text" autocomplete="off" placeholder="Type a message and hit Enter" />
-          <button type="submit" class="send-btn">Send</button>
-        </form>
-      </div>
-    </div>
-  </div>
+// @ts-types deno types
+declare const Deno: {
+  openKv(): Promise<Kv>;
+  readFile(path: string): Promise<Uint8Array>;
+  upgradeWebSocket(req: Request): { socket: WebSocket; response: Response };
+  serve(options: { port: number }, handler: (req: Request) => Promise<Response> | Response): void;
+};
 
-<script>
-  const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
-  let ws = null;
-  let me = null;
+interface Kv {
+  get<T>(key: string[]): Promise<{ value: T | null }>;
+  set(key: string[], value: unknown): Promise<void>;
+  delete(key: string[]): Promise<void>;
+  list<T>(options: { prefix: string[] }): AsyncIterable<{ key: string[]; value: T }>;
+}
 
-  function setUser(id) {
-    me = id;
-    localStorage.setItem('aj_user', me);
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('chat').style.display = 'flex';
-    document.getElementById('meLabel').textContent = (me === 'J' ? 'You: J' : 'You: a');
-    document.getElementById('themLabel').textContent = (me === 'J' ? 'a' : 'J');
-    connect();
-  }
+// Initialize Deno KV for message persistence
+const kv = await Deno.openKv();
 
-  function connect() {
-    const statusEl = document.getElementById('connStatus');
-    statusEl.textContent = 'Connecting...';
-    ws = new WebSocket(WS_URL);
+// Store connected clients
+const clients = new Map<WebSocket, { user: string | null; mood?: string }>();
 
-    ws.onopen = () => {
-      statusEl.textContent = 'Online';
-      statusEl.classList.add('online');
-      ws.send(JSON.stringify({ type: 'hello', user: me }));
-    };
+// Message interface - includes all possible message properties
+interface Message {
+  type: string;
+  id?: string;
+  user?: string;
+  text?: string;
+  time?: number;
+  media?: { type: string; name: string; data: string };
+  read?: boolean;
+  reactions?: Record<string, string[]>;
+  typing?: boolean;
+  emoji?: string;
+  content?: string;
+  mood?: string;
+  online?: boolean;
+  messages?: Message[];
+}
 
-    ws.onclose = () => {
-      statusEl.textContent = 'Disconnected, retrying...';
-      statusEl.classList.remove('online');
-      setTimeout(connect, 1200);
-    };
+export {};
 
-    ws.onmessage = (event) => {
-      let data;
-      try { data = JSON.parse(event.data); } catch { return; }
-      if (data.type === 'chat') {
-        addMessage(data.user === me ? 'me' : 'them', data.user, data.text, data.time);
-      }
-    };
-  }
-
-  function addMessage(kind, from, text, time) {
-    const box = document.getElementById('messages');
-    const wrap = document.createElement('div');
-    wrap.className = 'msg ' + kind;
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = from + ' - ' + new Date(time).toLocaleTimeString();
-    const body = document.createElement('div');
-    body.textContent = text;
-    wrap.appendChild(meta);
-    wrap.appendChild(body);
-    box.appendChild(wrap);
-    box.scrollTop = box.scrollHeight;
-  }
-
-  document.getElementById('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('input');
-    const text = input.value.trim();
-    if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-    const msg = { type: 'chat', user: me, text, time: Date.now() };
-    ws.send(JSON.stringify(msg));
-    input.value = '';
-  });
-
-  const saved = localStorage.getItem('aj_user');
-  if (saved === 'J' || saved === 'a') {
-    setUser(saved);
-  }
-</script>
-</body>
-</html>`;
-
-const clients = new Map();
-
-function broadcast(obj: { type: string; user: string; text: string; time: number }) {
+// Broadcast message to all connected clients
+function broadcast(obj: Message) {
   const msg = JSON.stringify(obj);
   for (const [ws] of clients) {
-    try { ws.send(msg); } catch (_) { /* ignore */ }
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+      }
+    } catch (_) {
+      /* ignore */
+    }
   }
 }
 
-Deno.serve({ port: 8000 }, (req) => {
+// Broadcast to a specific user
+function broadcastToUser(user: string, obj: Message) {
+  const msg = JSON.stringify(obj);
+  for (const [ws, info] of clients) {
+    if (info.user === user && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(msg);
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  }
+}
+
+// Save message to KV store
+async function saveMessage(msg: Message) {
+  const key = ["messages", msg.time || Date.now()];
+  await kv.set(key, msg);
+}
+
+// Get message history
+async function getMessageHistory(): Promise<Message[]> {
+  const messages: Message[] = [];
+  const iter = kv.list<Message>({ prefix: ["messages"] });
+  for await (const entry of iter) {
+    messages.push(entry.value);
+  }
+  // Sort by time and limit to last 100 messages
+  return messages.sort((a, b) => (a.time || 0) - (b.time || 0)).slice(-100);
+}
+
+// Clear all messages
+async function clearMessages() {
+  const iter = kv.list({ prefix: ["messages"] });
+  for await (const entry of iter) {
+    await kv.delete(entry.key);
+  }
+}
+
+// Delete a specific message
+async function deleteMessage(id: string) {
+  const iter = kv.list<Message>({ prefix: ["messages"] });
+  for await (const entry of iter) {
+    if (entry.value.id === id) {
+      await kv.delete(entry.key);
+      break;
+    }
+  }
+}
+
+// Get shared notes
+async function getNotes(): Promise<string> {
+  const result = await kv.get<string>(["notes"]);
+  return result.value || "";
+}
+
+// Save shared notes
+async function saveNotes(content: string) {
+  await kv.set(["notes"], content);
+}
+
+// Get content type for file extension
+function getContentType(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase();
+  const types: Record<string, string> = {
+    html: "text/html; charset=utf-8",
+    css: "text/css; charset=utf-8",
+    js: "application/javascript; charset=utf-8",
+    json: "application/json; charset=utf-8",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    ico: "image/x-icon",
+    woff: "font/woff",
+    woff2: "font/woff2",
+  };
+  return types[ext || ""] || "application/octet-stream";
+}
+
+// Serve static files
+async function serveStatic(pathname: string): Promise<Response> {
+  // Default to index.html
+  let filePath = pathname === "/" ? "/index.html" : pathname;
+
+  try {
+    const file = await Deno.readFile(`./public${filePath}`);
+    return new Response(file, {
+      headers: {
+        "content-type": getContentType(filePath),
+        "cache-control": "public, max-age=3600",
+      },
+    });
+  } catch {
+    // If file not found, serve index.html for SPA routing
+    try {
+      const file = await Deno.readFile("./public/index.html");
+      return new Response(file, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    } catch {
+      return new Response("Not Found", { status: 404 });
+    }
+  }
+}
+
+// Handle WebSocket messages
+async function handleWebSocketMessage(
+  socket: WebSocket,
+  data: Message
+) {
+  const info = clients.get(socket);
+
+  switch (data.type) {
+    case "hello":
+      if (data.user === "J" || data.user === "a") {
+        clients.set(socket, { user: data.user, mood: undefined });
+
+        // Send message history
+        const history = await getMessageHistory();
+        socket.send(JSON.stringify({ type: "history", messages: history }));
+
+        // Notify others about presence
+        broadcast({
+          type: "presence",
+          user: data.user,
+          online: true,
+        } as Message);
+      }
+      break;
+
+    case "chat":
+      if (!info?.user) return;
+
+      const msg: Message = {
+        type: "chat",
+        id: data.id || `${info.user}-${Date.now()}`,
+        user: info.user,
+        text: data.text ? String(data.text).slice(0, 5000) : undefined,
+        media: data.media,
+        time: typeof data.time === "number" ? data.time : Date.now(),
+        read: false,
+      };
+
+      await saveMessage(msg);
+      broadcast(msg);
+      break;
+
+    case "typing":
+      if (!info?.user) return;
+      // Broadcast typing status to other user
+      const other = info.user === "J" ? "a" : "J";
+      broadcastToUser(other, {
+        type: "typing",
+        user: info.user,
+        typing: data.typing,
+      } as unknown as Message);
+      break;
+
+    case "read":
+      if (!info?.user) return;
+      // Notify sender that messages were read
+      const sender = info.user === "J" ? "a" : "J";
+      broadcastToUser(sender, {
+        type: "read",
+        user: info.user,
+      } as Message);
+      break;
+
+    case "reaction":
+      if (!info?.user || !data.id) return;
+      broadcast({
+        type: "reaction",
+        id: data.id,
+        user: info.user,
+        emoji: data.emoji,
+      } as unknown as Message);
+      break;
+
+    case "delete":
+      if (!info?.user || !data.id) return;
+      // Only allow deleting own messages
+      if (data.id.startsWith(info.user)) {
+        await deleteMessage(data.id);
+        broadcast({
+          type: "delete",
+          id: data.id,
+        } as Message);
+      }
+      break;
+
+    case "clear":
+      await clearMessages();
+      broadcast({ type: "history", messages: [] } as unknown as Message);
+      break;
+
+    case "getNotes":
+      const notes = await getNotes();
+      socket.send(JSON.stringify({ type: "notes", content: notes }));
+      break;
+
+    case "notes":
+      if (data.content !== undefined) {
+        await saveNotes(String(data.content).slice(0, 50000));
+        // Broadcast to other user
+        for (const [ws, wsInfo] of clients) {
+          if (ws !== socket && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "notes", content: data.content }));
+          }
+        }
+      }
+      break;
+
+    case "mood":
+      if (!info?.user) return;
+      info.mood = data.mood as string;
+      clients.set(socket, info);
+
+      // Broadcast mood to other user
+      const otherUser = info.user === "J" ? "a" : "J";
+      broadcastToUser(otherUser, {
+        type: "presence",
+        user: info.user,
+        online: true,
+        mood: info.mood,
+      } as unknown as Message);
+      break;
+  }
+}
+
+// Main server
+Deno.serve({ port: 8000 }, async (req) => {
   const { pathname } = new URL(req.url);
 
+  // WebSocket endpoint
   if (pathname === "/ws") {
     const { socket, response } = Deno.upgradeWebSocket(req);
 
@@ -157,29 +299,24 @@ Deno.serve({ port: 8000 }, (req) => {
       clients.set(socket, { user: null });
     };
 
-    socket.onmessage = (event) => {
-      let data;
-      try { data = JSON.parse(event.data); } catch { return; }
-
-      if (data.type === "hello" && (data.user === "J" || data.user === "a")) {
-        clients.set(socket, { user: data.user });
-        return;
-      }
-
-      if (data.type === "chat") {
-        const info = clients.get(socket);
-        if (!info || !info.user || (info.user !== "J" && info.user !== "a")) return;
-        const msg = {
-          type: "chat",
-          user: info.user,
-          text: String(data.text ?? ""),
-          time: typeof data.time === "number" ? data.time : Date.now(),
-        };
-        broadcast(msg);
+    socket.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        await handleWebSocketMessage(socket, data);
+      } catch (e) {
+        console.error("WebSocket message error:", e);
       }
     };
 
     socket.onclose = () => {
+      const info = clients.get(socket);
+      if (info?.user) {
+        broadcast({
+          type: "presence",
+          user: info.user,
+          online: false,
+        } as Message);
+      }
       clients.delete(socket);
     };
 
@@ -190,9 +327,6 @@ Deno.serve({ port: 8000 }, (req) => {
     return response;
   }
 
-  return new Response(page, {
-    headers: {
-      "content-type": "text/html; charset=utf-8",
-    },
-  });
+  // Serve static files
+  return await serveStatic(pathname);
 });

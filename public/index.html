@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>aJ • Our Space</title>
+  <meta name="description" content="A private chat space for J and a">
+  <meta name="theme-color" content="#0f0f23">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💕</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen login-screen">
+      <div class="login-container">
+        <div class="login-header">
+          <div class="logo-anim">
+            <span class="logo-a">a</span>
+            <span class="logo-heart">💕</span>
+            <span class="logo-j">J</span>
+          </div>
+          <h1>Our Private Space</h1>
+          <p class="subtitle">A place just for us</p>
+        </div>
+
+        <div class="login-cards">
+          <button class="user-card user-j" onclick="App.setUser('J')">
+            <div class="user-avatar">J</div>
+            <div class="user-info">
+              <span class="user-name">Jeshwanth</span>
+              <span class="user-status">Tap to enter</span>
+            </div>
+            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+          <button class="user-card user-a" onclick="App.setUser('a')">
+            <div class="user-avatar">a</div>
+            <div class="user-info">
+              <span class="user-name">Aishwarya</span>
+              <span class="user-status">Tap to enter</span>
+            </div>
+            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="login-note">No passwords needed. Just us. 💝</p>
+      </div>
+    </div>
+
+    <!-- Main Chat Screen -->
+    <div id="chatScreen" class="screen chat-screen hidden">
+      <!-- Header -->
+      <header class="chat-header">
+        <div class="header-left">
+          <button class="btn-icon" onclick="App.logout()" title="Switch User">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="header-center" onclick="App.showPartnerProfile()">
+          <div class="partner-avatar" id="partnerAvatar">?</div>
+          <div class="partner-info">
+            <span class="partner-name" id="partnerName">Partner</span>
+            <span class="partner-status" id="partnerStatus">
+              <span class="status-dot"></span>
+              <span id="partnerStatusText">Connecting...</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="btn-icon" onclick="App.toggleFeatures()" title="Features">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </button>
+          <button class="btn-icon" onclick="App.openSettings()" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages Area -->
+      <div class="messages-container" id="messagesContainer">
+        <div class="messages-wrapper" id="messages">
+          <div class="date-divider"><span>Today</span></div>
+        </div>
+
+        <div class="typing-indicator hidden" id="typingIndicator">
+          <div class="typing-avatar" id="typingAvatar">?</div>
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+        <div class="input-container">
+          <button class="btn-icon attach-btn" onclick="App.openMediaPicker()" title="Attach">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+
+          <div class="input-wrapper">
+            <textarea
+              id="messageInput"
+              placeholder="Message..."
+              rows="1"
+              onkeydown="App.handleKeyDown(event)"
+              oninput="App.handleInput(event)"
+            ></textarea>
+            <button class="btn-emoji" onclick="App.toggleEmojiPicker()" title="Emoji">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+              </svg>
+            </button>
+          </div>
+
+          <button class="btn-send" id="sendBtn" onclick="App.sendMessage()" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple hidden onchange="App.handleFileSelect(event)">
+      </div>
+
+      <!-- Emoji Picker -->
+      <div class="emoji-picker hidden" id="emojiPicker">
+        <div class="emoji-header">
+          <span>Emoji</span>
+          <button class="btn-close" onclick="App.closeEmojiPicker()">×</button>
+        </div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal hidden" id="settingsModal">
+      <div class="modal-backdrop" onclick="App.closeSettings()"></div>
+      <div class="modal-content settings-modal">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="btn-close" onclick="App.closeSettings()">×</button>
+        </div>
+
+        <div class="settings-body">
+          <section class="settings-section">
+            <h3>Appearance</h3>
+            <div class="setting-item">
+              <label>Theme</label>
+              <select id="themeSetting" onchange="App.changeTheme(this.value)">
+                <option value="dark">Dark (Default)</option>
+                <option value="light">Light</option>
+                <option value="midnight">Midnight Blue</option>
+                <option value="rose">Rose Gold</option>
+                <option value="forest">Forest</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label>Chat Bubble Style</label>
+              <select id="bubbleStyle" onchange="App.changeBubbleStyle(this.value)">
+                <option value="modern">Modern</option>
+                <option value="classic">Classic</option>
+                <option value="minimal">Minimal</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label>Font Size</label>
+              <select id="fontSizeSetting" onchange="App.changeFontSize(this.value)">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Notifications</h3>
+            <div class="setting-item">
+              <label>Sound Effects</label>
+              <label class="toggle">
+                <input type="checkbox" id="soundSetting" checked onchange="App.toggleSound(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>Notification Sound</label>
+              <select id="notifSoundSetting" onchange="App.changeNotifSound(this.value)">
+                <option value="soft">Soft Chime</option>
+                <option value="pop">Pop</option>
+                <option value="ding">Ding</option>
+                <option value="heart">Heartbeat</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label>Vibration</label>
+              <label class="toggle">
+                <input type="checkbox" id="vibrateSetting" checked onchange="App.toggleVibration(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Chat</h3>
+            <div class="setting-item">
+              <label>Show Read Receipts</label>
+              <label class="toggle">
+                <input type="checkbox" id="readReceiptsSetting" checked onchange="App.toggleReadReceipts(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>Show Typing Indicator</label>
+              <label class="toggle">
+                <input type="checkbox" id="typingIndicatorSetting" checked onchange="App.toggleTypingIndicator(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>Enter to Send</label>
+              <label class="toggle">
+                <input type="checkbox" id="enterSendSetting" checked onchange="App.toggleEnterSend(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Our Relationship</h3>
+            <div class="setting-item">
+              <label>Anniversary Date</label>
+              <input type="date" id="anniversaryDate" onchange="App.setAnniversary(this.value)">
+            </div>
+            <div class="setting-item">
+              <label>Partner's Display Name</label>
+              <input type="text" id="partnerDisplayName" placeholder="Enter name..." onchange="App.setPartnerName(this.value)">
+            </div>
+          </section>
+
+          <section class="settings-section danger-zone">
+            <h3>Data</h3>
+            <div class="setting-item">
+              <label>Clear All Messages</label>
+              <button class="btn-danger" onclick="App.clearAllMessages()">Clear Chat</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Panel -->
+    <div class="features-panel hidden" id="featuresPanel">
+      <div class="features-backdrop" onclick="App.toggleFeatures()"></div>
+      <div class="features-content">
+        <div class="features-header">
+          <h3>Our Features</h3>
+          <button class="btn-close" onclick="App.toggleFeatures()">×</button>
+        </div>
+        <div class="features-grid">
+          <button class="feature-card" onclick="App.openSharedNotes()">
+            <div class="feature-icon">📝</div>
+            <span>Shared Notes</span>
+          </button>
+          <button class="feature-card" onclick="App.openPhotoGallery()">
+            <div class="feature-icon">📸</div>
+            <span>Our Photos</span>
+          </button>
+          <button class="feature-card" onclick="App.openCalendar()">
+            <div class="feature-icon">📅</div>
+            <span>Calendar</span>
+          </button>
+          <button class="feature-card" onclick="App.openMoodBoard()">
+            <div class="feature-icon">💭</div>
+            <span>Mood Status</span>
+          </button>
+          <button class="feature-card" onclick="App.openWishlist()">
+            <div class="feature-icon">🎁</div>
+            <span>Wishlist</span>
+          </button>
+          <button class="feature-card" onclick="App.openCountdown()">
+            <div class="feature-icon">⏰</div>
+            <span>Countdown</span>
+          </button>
+        </div>
+        <div class="anniversary-card" id="anniversaryCard" style="display:none;">
+          <div class="anni-icon">💕</div>
+          <div class="anni-info">
+            <span class="anni-label">Together for</span>
+            <span class="anni-days" id="anniDays">0 days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shared Notes Modal -->
+    <div class="modal hidden" id="notesModal">
+      <div class="modal-backdrop" onclick="App.closeSharedNotes()"></div>
+      <div class="modal-content notes-modal">
+        <div class="modal-header">
+          <h2>📝 Our Shared Notes</h2>
+          <button class="btn-close" onclick="App.closeSharedNotes()">×</button>
+        </div>
+        <div class="notes-body">
+          <textarea id="sharedNotes" placeholder="Write anything here... Plans, memories, love letters... 💕" oninput="App.saveNotes()"></textarea>
+          <p class="notes-hint">Auto-saved and synced between both of you</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mood Modal -->
+    <div class="modal hidden" id="moodModal">
+      <div class="modal-backdrop" onclick="App.closeMoodBoard()"></div>
+      <div class="modal-content mood-modal">
+        <div class="modal-header">
+          <h2>💭 How are you feeling?</h2>
+          <button class="btn-close" onclick="App.closeMoodBoard()">×</button>
+        </div>
+        <div class="mood-grid">
+          <button class="mood-btn" onclick="App.setMood('😊', 'Happy')">😊<span>Happy</span></button>
+          <button class="mood-btn" onclick="App.setMood('🥰', 'In Love')">🥰<span>In Love</span></button>
+          <button class="mood-btn" onclick="App.setMood('😴', 'Sleepy')">😴<span>Sleepy</span></button>
+          <button class="mood-btn" onclick="App.setMood('😢', 'Sad')">😢<span>Sad</span></button>
+          <button class="mood-btn" onclick="App.setMood('😤', 'Annoyed')">😤<span>Annoyed</span></button>
+          <button class="mood-btn" onclick="App.setMood('🤗', 'Miss You')">🤗<span>Miss You</span></button>
+          <button class="mood-btn" onclick="App.setMood('🤒', 'Sick')">🤒<span>Sick</span></button>
+          <button class="mood-btn" onclick="App.setMood('💪', 'Motivated')">💪<span>Motivated</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="modal hidden" id="galleryModal">
+      <div class="modal-backdrop" onclick="App.closePhotoGallery()"></div>
+      <div class="modal-content gallery-modal">
+        <div class="modal-header">
+          <h2>📸 Our Photos</h2>
+          <button class="btn-close" onclick="App.closePhotoGallery()">×</button>
+        </div>
+        <div class="gallery-grid" id="galleryGrid">
+          <p class="gallery-empty">Photos shared in chat will appear here 💕</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Viewer -->
+    <div class="image-viewer hidden" id="imageViewer" onclick="App.closeImageViewer()">
+      <button class="viewer-close">×</button>
+      <img id="viewerImage" src="" alt="Shared image">
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="toast">
+      <span id="toastMessage"></span>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
