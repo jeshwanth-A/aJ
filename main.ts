@@ -1,3 +1,4 @@
+// aJ Chat - Two user chat app
 const page = `<!doctype html>
 <html>
 <head>
