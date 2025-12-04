@@ -28,31 +28,10 @@
           <p class="subtitle">A place just for us</p>
         </div>
 
-        <div class="login-cards">
-          <button class="user-card user-j" onclick="App.setUser('J')">
-            <div class="user-avatar">J</div>
-            <div class="user-info">
-              <span class="user-name">Jeshwanth</span>
-              <span class="user-status">Tap to enter</span>
-            </div>
-            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
-
-          <button class="user-card user-a" onclick="App.setUser('a')">
-            <div class="user-avatar">a</div>
-            <div class="user-info">
-              <span class="user-name">Aishwarya</span>
-              <span class="user-status">Tap to enter</span>
-            </div>
-            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
+        <div class="simple-icons">
+          <button class="icon-btn icon-a" onclick="App.setUser('a')">a</button>
+          <button class="icon-btn icon-j" onclick="App.setUser('J')">J</button>
         </div>
-
-        <p class="login-note">No passwords needed. Just us. 💝</p>
       </div>
     </div>
 
@@ -147,7 +126,7 @@
       </div>
 
       <!-- Emoji Picker -->
-      <div class="emoji-picker hidden" id="emojiPicker">
+      <div class="emoji-picker hidden" id="emojiPicker" style="display:none">
         <div class="emoji-header">
           <span>Emoji</span>
           <button class="btn-close" onclick="App.closeEmojiPicker()">×</button>
@@ -157,7 +136,7 @@
     </div>
 
     <!-- Settings Modal -->
-    <div class="modal hidden" id="settingsModal">
+    <div class="modal hidden" id="settingsModal" style="display:none">
       <div class="modal-backdrop" onclick="App.closeSettings()"></div>
       <div class="modal-content settings-modal">
         <div class="modal-header">
@@ -272,7 +251,7 @@
     </div>
 
     <!-- Features Panel -->
-    <div class="features-panel hidden" id="featuresPanel">
+    <div class="features-panel hidden" id="featuresPanel" style="display:none">
       <div class="features-backdrop" onclick="App.toggleFeatures()"></div>
       <div class="features-content">
         <div class="features-header">
@@ -320,7 +299,7 @@
     </div>
 
     <!-- Shared Notes Modal -->
-    <div class="modal hidden" id="notesModal">
+    <div class="modal hidden" id="notesModal" style="display:none">
       <div class="modal-backdrop" onclick="App.closeSharedNotes()"></div>
       <div class="modal-content notes-modal">
         <div class="modal-header">
@@ -335,7 +314,7 @@
     </div>
 
     <!-- Mood Modal -->
-    <div class="modal hidden" id="moodModal">
+    <div class="modal hidden" id="moodModal" style="display:none">
       <div class="modal-backdrop" onclick="App.closeMoodBoard()"></div>
       <div class="modal-content mood-modal">
         <div class="modal-header">
@@ -356,7 +335,7 @@
     </div>
 
     <!-- Gallery Modal -->
-    <div class="modal hidden" id="galleryModal">
+    <div class="modal hidden" id="galleryModal" style="display:none">
       <div class="modal-backdrop" onclick="App.closePhotoGallery()"></div>
       <div class="modal-content gallery-modal">
         <div class="modal-header">
@@ -370,13 +349,13 @@
     </div>
 
     <!-- Image Viewer -->
-    <div class="image-viewer hidden" id="imageViewer" onclick="App.closeImageViewer()">
+    <div class="image-viewer hidden" id="imageViewer" style="display:none" onclick="App.closeImageViewer()">
       <button class="viewer-close">×</button>
       <img id="viewerImage" src="" alt="Shared image">
     </div>
 
     <!-- Toast Notification -->
-    <div class="toast hidden" id="toast">
+    <div class="toast hidden" id="toast" style="display:none">
       <span id="toastMessage"></span>
     </div>
   </div>

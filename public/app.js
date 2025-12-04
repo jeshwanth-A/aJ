@@ -498,23 +498,34 @@ const App = {
     const viewer = document.getElementById('imageViewer');
     const img = document.getElementById('viewerImage');
     img.src = src;
+    viewer.style.display = 'flex';
     viewer.classList.remove('hidden');
   },
 
   // Close image viewer
   closeImageViewer() {
-    document.getElementById('imageViewer').classList.add('hidden');
+    const viewer = document.getElementById('imageViewer');
+    viewer.style.display = 'none';
+    viewer.classList.add('hidden');
   },
 
   // Toggle emoji picker
   toggleEmojiPicker() {
     const picker = document.getElementById('emojiPicker');
-    picker.classList.toggle('hidden');
+    if (picker.classList.contains('hidden')) {
+      picker.style.display = 'flex';
+      picker.classList.remove('hidden');
+    } else {
+      picker.style.display = 'none';
+      picker.classList.add('hidden');
+    }
   },
 
   // Close emoji picker
   closeEmojiPicker() {
-    document.getElementById('emojiPicker').classList.add('hidden');
+    const picker = document.getElementById('emojiPicker');
+    picker.style.display = 'none';
+    picker.classList.add('hidden');
   },
 
   // Populate emoji grid
@@ -666,9 +677,11 @@ const App = {
     const toast = document.getElementById('toast');
     const msgEl = document.getElementById('toastMessage');
     msgEl.textContent = message;
+    toast.style.display = 'block';
     toast.classList.remove('hidden');
 
     setTimeout(() => {
+      toast.style.display = 'none';
       toast.classList.add('hidden');
     }, 3000);
   },
@@ -676,18 +689,23 @@ const App = {
   // Close all modals
   closeAllModals() {
     document.querySelectorAll('.modal, .features-panel, .emoji-picker, .image-viewer').forEach(el => {
+      el.style.display = 'none';
       el.classList.add('hidden');
     });
   },
 
   // Settings functions
   openSettings() {
-    document.getElementById('settingsModal').classList.remove('hidden');
+    const modal = document.getElementById('settingsModal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
     this.applySettings();
   },
 
   closeSettings() {
-    document.getElementById('settingsModal').classList.add('hidden');
+    const modal = document.getElementById('settingsModal');
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
   },
 
   changeTheme(theme) {
@@ -785,7 +803,14 @@ const App = {
 
   // Features panel
   toggleFeatures() {
-    document.getElementById('featuresPanel').classList.toggle('hidden');
+    const panel = document.getElementById('featuresPanel');
+    if (panel.classList.contains('hidden')) {
+      panel.style.display = 'block';
+      panel.classList.remove('hidden');
+    } else {
+      panel.style.display = 'none';
+      panel.classList.add('hidden');
+    }
   },
 
   showPartnerProfile() {
@@ -794,7 +819,9 @@ const App = {
 
   // Shared Notes
   openSharedNotes() {
-    document.getElementById('notesModal').classList.remove('hidden');
+    const modal = document.getElementById('notesModal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
     this.toggleFeatures();
 
     // Request notes from server
@@ -804,7 +831,9 @@ const App = {
   },
 
   closeSharedNotes() {
-    document.getElementById('notesModal').classList.add('hidden');
+    const modal = document.getElementById('notesModal');
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
   },
 
   saveNotes() {
@@ -827,12 +856,16 @@ const App = {
 
   // Mood
   openMoodBoard() {
-    document.getElementById('moodModal').classList.remove('hidden');
+    const modal = document.getElementById('moodModal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
     this.toggleFeatures();
   },
 
   closeMoodBoard() {
-    document.getElementById('moodModal').classList.add('hidden');
+    const modal = document.getElementById('moodModal');
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
   },
 
   setMood(emoji, label) {
@@ -849,12 +882,16 @@ const App = {
 
   // Gallery
   openPhotoGallery() {
-    document.getElementById('galleryModal').classList.remove('hidden');
+    const modal = document.getElementById('galleryModal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
     this.toggleFeatures();
   },
 
   closePhotoGallery() {
-    document.getElementById('galleryModal').classList.add('hidden');
+    const modal = document.getElementById('galleryModal');
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
   },
 
   // ========== CALENDAR ==========
