@@ -38,6 +38,34 @@ Then open http://localhost:8000 in two different browsers or devices. Choose use
 4. Set entrypoint to `main.ts`
 5. Deploy! 🚀
 
+6. Attach a Deno KV database (Deno Deploy will auto-create and link the database)
+
+## Database
+
+This app uses **Deno KV** for data persistence. The database stores:
+
+- 💬 **Chat messages** - All conversations are persisted with media support
+- 📝 **Shared notes** - Collaborative notes between users
+- 🔔 **User preferences** - Themes, settings, and mood status
+
+### Database Instance
+
+**Database Name**: `ajdb`  
+**Engine**: Deno KV  
+**Instance**: `422fef-local` (for preview deployments) / `422fef-production` (for production)
+
+The database is automatically provisioned when deploying to Deno Deploy. Environment variables (`DATABASE_URL`, `PGHOST`, etc.) are automatically injected.
+
+### Local Development
+
+For local development, Deno KV will use a local file-based database. To connect to the production database locally:
+
+```bash
+deno run --tunnel main.ts
+```
+
+This securely connects your local environment to the Deno Deploy database.
+
 **Live**: https://aj-app.jeshwanth-a.deno.net/
 
 ## Tech Stack
