@@ -1,23 +1,13 @@
 // aJ Chat - Enhanced Two User Chat App
 // Server with Deno KV for persistence
 
-// @ts-types deno types
-declare const Deno: {
-  openKv(): Promise<Kv>;
-  readFile(path: string): Promise<Uint8Array>;
-  upgradeWebSocket(req: Request): { socket: WebSocket; response: Response };
-  serve(options: { port: number }, handler: (req: Request) => Promise<Response> | Response): void;
-};
-
-interface Kv {
-  get<T>(key: string[]): Promise<{ value: T | null }>;
-  set(key: string[], value: unknown): Promise<void>;
-  delete(key: string[]): Promise<void>;
-  list<T>(options: { prefix: string[] }): AsyncIterable<{ key: string[]; value: T }>;
-}
-
 // Initialize Deno KV for message persistence
-const kv = await Deno.openKv();
+let kv: Deno.Kv;
+try {
+  kv = await Deno.openKv();
+} catch (e) {
+  console.error("Failed to initialize Deno KV:", e);
+}
 
 // Store connected clients
 const clients = new Map<WebSocket, { user: string | null; mood?: string }>();
@@ -77,8 +67,6 @@ interface CountdownItem {
   createdBy: string;
   createdAt: number;
 }
-
-export {};
 
 // Broadcast message to all connected clients
 function broadcast(obj: Message) {
@@ -460,8 +448,13 @@ async function handleWebSocketMessage(
 }
 
 // Main server
-Deno.serve({ port: 8000 }, async (req) => {
+Deno.serve(async (req) => {
   const { pathname } = new URL(req.url);
+
+  // Check for KV initialization
+  if (!kv) {
+    return new Response("Service Temporarily Unavailable: Database not initialized", { status: 503 });
+  }
 
   // WebSocket endpoint
   if (pathname === "/ws") {
